@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Token Counter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gemini Token Counter</h1>
+        
+        <div class="api-key-section">
+            <label for="api-key">Gemini API Key:</label>
+            <input type="password" id="api-key" placeholder="Enter your Gemini API Key">
+            <p class="info">Your API key is stored locally in your browser and never sent to our servers.</p>
+        </div>
+
+        <div class="input-section">
+            <label for="text-input">Enter text to count tokens:</label>
+            <textarea id="text-input" rows="8" placeholder="The quick brown fox jumps over the lazy dog."></textarea>
+            <button id="count-tokens">Count Tokens</button>
+        </div>
+
+        <div class="results-section">
+            <div id="loading" class="hidden">Counting tokens...</div>
+            <div id="results" class="hidden">
+                <h2>Token Count Results</h2>
+                <div class="result-card">
+                    <h3>Token Count Only</h3>
+                    <p id="simple-count">Total tokens: <span id="token-count">0</span></p>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Detailed Token Usage</h3>
+                    <p>Prompt token count: <span id="prompt-tokens">0</span></p>
+                    <p>Response token count: <span id="response-tokens">0</span></p>
+                    <p>Total token count: <span id="total-tokens">0</span></p>
+                </div>
+            </div>
+            <div id="error" class="hidden">
+                <h3>Error</h3>
+                <p id="error-message"></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@0.2.0/dist/index.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
