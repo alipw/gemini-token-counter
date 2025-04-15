@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const apiKeyInput = document.getElementById('api-key');
+    const modelNameInput = document.getElementById('model-name');
+    const apiVersionInput = document.getElementById('api-version');
     const textInput = document.getElementById('text-input');
     const countButton = document.getElementById('count-tokens');
     const resultsDiv = document.getElementById('results');
@@ -10,9 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Results elements
     const tokenCountSpan = document.getElementById('token-count');
-    const promptTokensSpan = document.getElementById('prompt-tokens');
-    const responseTokensSpan = document.getElementById('response-tokens');
-    const totalTokensSpan = document.getElementById('total-tokens');
+    const detailedResultCard = document.querySelector('.result-card:nth-of-type(2)');
+    
+    // Hide detailed card initially
+    if (detailedResultCard) {
+        detailedResultCard.style.display = 'none';
+    }
     
     // Check for saved API key
     const savedApiKey = localStorage.getItem('gemini-api-key');
@@ -23,13 +28,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener for the count button
     countButton.addEventListener('click', async function() {
         const apiKey = apiKeyInput.value.trim();
+        const modelName = modelNameInput.value.trim();
+        const apiVersion = apiVersionInput.value.trim();
         const text = textInput.value.trim();
         
         if (!apiKey) {
             showError('Please enter your Gemini API Key');
             return;
         }
-        
+        if (!modelName) {
+            showError('Please enter the Model Name');
+            return;
+        }
+        if (!apiVersion) {
+            showError('Please enter the API Version');
+            return;
+        }
         if (!text) {
             showError('Please enter some text to analyze');
             return;
@@ -42,30 +56,47 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingDiv.classList.remove('hidden');
         resultsDiv.classList.add('hidden');
         errorDiv.classList.add('hidden');
+        if (detailedResultCard) {
+           detailedResultCard.style.display = 'none';
+        }
         
         try {
-            // Initialize the Gemini API
-            const genAI = new window.GoogleGenerativeAI(apiKey);
+            // Construct the API endpoint
+            const apiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:countTokens?key=${apiKey}`;
             
-            // First, count tokens only
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-            const tokenCount = await model.countTokens(text);
+            // Prepare the request body
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: text
+                            }
+                        ]
+                    }
+                ]
+            };
             
-            // Update the simple token count
-            tokenCountSpan.textContent = tokenCount.totalTokens;
+            // Make the API call using fetch
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
             
-            // Now generate content to get detailed usage metadata
-            const response = await model.generateContent(text);
-            const result = response.response;
-            
-            // Get usage metadata
-            if (result.promptFeedback && result.usageMetadata) {
-                promptTokensSpan.textContent = result.usageMetadata.promptTokenCount;
-                responseTokensSpan.textContent = result.usageMetadata.candidatesTokenCount;
-                totalTokensSpan.textContent = result.usageMetadata.totalTokenCount;
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown API error' }));
+                throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.error?.message || errorData.message}`);
             }
             
-            // Show results
+            const data = await response.json();
+            
+            // Update the simple token count
+            tokenCountSpan.textContent = data.totalTokens || 0;
+            
+            // Show results (only the simple count card)
             loadingDiv.classList.add('hidden');
             resultsDiv.classList.remove('hidden');
             
